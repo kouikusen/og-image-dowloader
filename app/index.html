@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
+    <title>メルマガ画像作成ツール</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div style="max-width: 720px; margin-left: auto; margin-right: auto; padding-bottom: 50px;">
+    <h1>メルマガ画像作成ツール</h1>
+    <div style="display: none;">
+    We are using Node.js <span id="node-version"></span>, Chromium
+    <span id="chrome-version"></span>, and Electron
+    <span id="electron-version"></span>.</div>
+
+    <h3>ヘッダー画像作成</h3>
+    <div id="types">
+      <input
+        type="radio"
+        id="bythem"
+        name="header-image-type"
+        value="bythem"
+        checked
+      />
+      <label for="bythem">by them</label>
+
+      <input
+        type="radio"
+        id="business"
+        name="header-image-type"
+        value="business"
+      />
+      <label for="business">BUSINESS</label>
+
+      <input type="radio" id="trend" name="header-image-type" value="trend" />
+      <label for="trend">TREND</label>
+
+      <input
+        type="radio"
+        id="tripeditor"
+        name="header-image-type"
+        value="tripeditor"
+      />
+      <label for="tripeditor">TRiPEDiTOR</label>
+
+      <input type="radio" id="editor" name="header-image-type" value="editor" />
+      <label for="editor">編集部厳選旅行</label>
+    </div>
+
+    <textarea
+      type="text"
+      id="header-url-list"
+      cols="100"
+      rows="3"
+      placeholder="ヘッダー画像の記事URLを入力してください"
+    ></textarea
+    >
+    <div>
+      <button id="header-button" onclick="headerImage()">
+        ヘッダー画像を作成する
+      </button>
+    </div>
+    <p id="header-result" style="color: #777; background-color: #e0e0e0; font-size: 12px;">(確認用)ヘッダー画像記事URLはここに表示されます</p>
+    <div id="header-images"></div>
+
+    <!-- TREND 07,14 画像作成 -->
+    <hr>
+    <h3>TREND 07,14 画像作成 <button onclick="toggleTrendImage()" style="background-color: beige; color: #777; padding: 10px; display: inline-block; font-size: 14px;">表示/非表示</button></h3>
+    <div id="trend-image-section" style=" column-gap: 20px; display: none;">
+    <div style="display: flex; flex-direction: column; row-gap: 10px;">
+      <h4>記事07</h4>
+      <textarea name="trend-07-title" id="trend-07-title" cols="40" rows="3" placeholder="記事タイトル"></textarea>
+      <input type="text" id="trend-07-url" name="trend-07-url" value="" placeholder="記事URL">
+      <textarea name="trend-07-name" id="trend-07-name" cols="40" rows="3" placeholder="スポンサー名"></textarea>
+      <button id="trend-07-submit" onclick="makeTrendImage('07')">画像作成・更新</button>
+      <div id="trend-07-images"></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; row-gap: 10px;">
+      <h4>記事14</h4>
+      <textarea name="trend-14-title" id="trend-14-title" cols="40" rows="3" placeholder="記事タイトル"></textarea>
+      <input type="text" id="trend-14-url" name="trend-14-url" value="" placeholder="記事URL">
+      <textarea name="trend-14-name" id="trend-14-name" cols="40" rows="3" placeholder="スポンサー名"></textarea>
+      <button id="trend-14-submit" onclick="makeTrendImage('14')">画像作成・更新</button>
+      <div id="trend-14-images"></div>
+    </div>
+    </div>
+
+    <hr>
+    <h3>記事画像作成（350px*188px）</h3>
+    <h4>原稿を入力：</h4>
+    <textarea
+      type="text"
+      id="content-url-list"
+      cols="100"
+      rows="40"
+      placeholder="原稿を入力してください。 ※PR画像が入る箇所は新しい行にhttpを入力してください"
+    ></textarea>
+    <div>
+      <button id="readUrl" onclick="readUrl('content')">画像を作成する</button>
+    </div>
+
+    <h4>URL/画像結果</h4>
+    <p id="PR-list">PR画像箇所：</p>
+    <span onclick="togglePrImagesList()" style="background-color: beige; color: #777; padding: 10px; margin-bottom: 10px; display: inline-block; font-size: 14px;">(参考用) メルマガ別のPR画像リストを表示/非表示</span>
+    <p id="pr-images-list" style="display: none; border: 1px solid #777; background-color: beige; padding: 20px; font-size: 14px;">注意事項<br>数字の後は_ad_01, _ad_02…などをつけてください<br>ファイル名は合ってるのに、画像表示されない場合はjpgにしてアップしてみてください（ツールの問題があるかもしれない）<br><br>共通<br>横長バナーがあった場合：bn_ad_01.jpg　(JPEGはjpgにする)<br><br>Bythem<br>03_ad_01<br>10_ad_02<br>11_ad_03<br>13_ad_04<br>14_ad_05<br>おすすめ枠：pickup01.jpg<br><br>Trip editor<br>03_ad_01<br>06…<br>09<br>12<br>15<br><br>Editor Choice　編集部厳選<br>03<br>06<br>09<br>12<br><br>TREND<br>03<br>04<br>12<br>13<br>17<br>18<br>19<br>20<br><br>BUSINESS<br>03<br>06<br>07<br>10<br>19<br>20<br>21<br>22<br><br>金ジャ<br>04<br>05<br>12<br>13<br>おすすめ枠：pickup01.jpg<br></p>
+    <div
+      id="content-result"
+      style="height: 200px; overflow-y: scroll; border: 1px solid #e0e0e0; color: #777;background-color: #e0e0e0; font-size: 12px;"
+    >
+      (確認用)URL結果はここに表示されます
+    </div>
+
+    <div style="position: fixed; left: 0; bottom: 0;right: 0; background-color: rgba(225, 241, 255, 0.575); text-align: center; height: 40px; border-top: 1px solid #777; padding-top: 10px;">
+      <button onclick="downloadImages()">
+        作成された画像を全てダウンロードする
+      </button>
+    </div>
+
+    <h4>画像プレビュー</h4>
+    <div id="content-images"></div>
+
+  </div>
+
+    <script src="./js/og-image-downloader.js"></script>
+    <script src="./js/jszip.js"></script>
+
+    <style>
+      h3 {
+        background-color: #eaf5ff;
+        padding: 10px;
+        text-align: center;
+      }
+      button {
+        margin-left: auto;
+        margin-right: auto;
+        display: block;
+        background-color: #008cff;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        padding: 5px 10px;
+        font-weight: 700;
+      }
+    </style>
+  </body>
+</html>
