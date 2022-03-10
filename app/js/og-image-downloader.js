@@ -281,7 +281,7 @@ const getOGImages = function (url, a, type, canvasW, canvasH, headerType) {
       var img = new Image();
       img.onload = function (e) {
         var width, height;
-        if (THUMBNAIL_WIDTH/THUMBNAIL_HEIGHT > img.width/img.height) {
+        if (THUMBNAIL_WIDTH / THUMBNAIL_HEIGHT > img.width / img.height) {
           // 横長の画像は横のサイズを指定値にあわせる
           var ratio = img.height / img.width;
           width = THUMBNAIL_WIDTH;
@@ -347,45 +347,6 @@ const getOGImages = function (url, a, type, canvasW, canvasH, headerType) {
   });
 };
 
-// OGP画像を取得、処理
-const getOGImageUrl = function (url) {
-  //ヘッダーを定義
-  var headers = {
-    "user-agent":
-      "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Mobile Safari/537.36",
-  };
-
-  //オプションを定義
-  var options = {
-    url: url,
-    method: "GET",
-    headers: headers,
-  };
-
-  //リクエスト送信
-  request(options, function (error, response, body) {
-    //コールバックで色々な処理
-    if (error || !body) {
-      return;
-    }
-
-    const $ = cheerio.load(body);
-
-    // set ogp image url
-    if ($("meta[property='og:image']").attr("content")) {
-      var imgurl2 = $("meta[property='og:image']").attr("content");
-    }
-
-    // set on page
-    if (imgurl2) {
-      // define og image URL
-      return imgurl2;
-    } else {
-      return false;
-    }
-  });
-};
-
 // ヘッダー画像タイトル入れ
 const headerImageProcess = function (headerType, canvas) {
   var ctx = canvas.getContext("2d");
@@ -408,8 +369,153 @@ const headerImageProcess = function (headerType, canvas) {
       ctx.drawImage(img, 0, 0);
     };
     img.src = "./img/editor.png";
+  } else {
+    return;
   }
 };
+
+function dropHandler(ev) {
+  console.log("File(s) dropped");
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+
+  if (ev.dataTransfer.items) {
+    // Use DataTransferItemList interface to access the file(s)
+    for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+      // If dropped items aren't files, reject them
+      if (ev.dataTransfer.items[i].kind === "file") {
+        var file = ev.dataTransfer.items[i].getAsFile();
+        console.log("... file[" + i + "].name = " + file.name);
+        console.log(file);
+
+        // 選択されたタイプを取得
+        var types = document.getElementsByName("header-image-type");
+        var type_value;
+        for (var i = 0; i < types.length; i++) {
+          if (types[i].checked) {
+            type_value = types[i].value;
+          }
+        }
+
+        makeSmall(file, file.name, type_value);
+      }
+    }
+  } else {
+    // Use DataTransfer interface to access the file(s)
+    for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+      console.log(
+        "... file[" + i + "].name = " + ev.dataTransfer.files[i].name
+      );
+    }
+  }
+}
+
+function dragOverHandler(ev) {
+  // console.log("File(s) in drop zone");
+  document.getElementById("drop_zone").style.backgroundColor = "#e0e0e0";
+
+  // Prevent default behavior (Prevent file from being opened)
+  ev.preventDefault();
+}
+
+// 画像リサイズfunction(ローカルから処理の場合)
+function makeSmall(file, fileName, type_value) {
+  // ヘッダー画像のサイズを設定
+  let width, height;
+  if (type_value === "bythem") {
+    width = 600;
+    height = 355;
+  } else if (type_value === "business") {
+    width = 600;
+    height = 322;
+  } else if (type_value === "trend") {
+    width = 600;
+    height = 324;
+  } else if (type_value === "tripeditor") {
+    width = 600;
+    height = 463;
+  } else if (type_value === "editor") {
+    width = 600;
+    height = 400;
+  }else if (type_value === "regular_resize") {
+      width = 350;
+        height = 188;
+  }
+
+  const THUMBNAIL_WIDTH = width; // 画像リサイズ後の横の長さ
+  const THUMBNAIL_HEIGHT = height; // 画像リサイズ後の縦の長さ
+
+  if(type_value !== "regular_resize"){
+    fileName = "header.jpg";
+  }
+  let canvasId = fileName;
+
+  let reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = (e) => {
+    let img = new Image();
+    img.onload = () => {
+      var width, height;
+      if (THUMBNAIL_WIDTH / THUMBNAIL_HEIGHT > img.width / img.height) {
+        // 横長の画像は横のサイズを指定値にあわせる
+        var ratio = img.height / img.width;
+        width = THUMBNAIL_WIDTH;
+        height = THUMBNAIL_WIDTH * ratio;
+      } else {
+        // 縦長の画像は縦のサイズを指定値にあわせる
+        var ratio = img.width / img.height;
+        width = THUMBNAIL_HEIGHT * ratio;
+        height = THUMBNAIL_HEIGHT;
+      }
+
+      if (width > this.maxWidth) {
+        height = Math.round((height * this.maxWidth) / width);
+        width = this.maxWidth;
+      }
+
+      let canvas = document.createElement("canvas");
+      canvas.width = THUMBNAIL_WIDTH;
+      canvas.height = THUMBNAIL_HEIGHT;
+      canvas.id = canvasId;
+      let ctx = canvas.getContext("2d");
+
+      // 白背景にする
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 350, 188);
+
+      headerImageProcess(type_value, canvas);
+
+      // 画像を貼り付ける
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // ページにCanvasとファイルネーム表示
+      let imagesZone = document.getElementById("images_zone");
+      let p = document.createElement("p");
+      p.innerHTML = "<br><br>" + fileName;
+      imagesZone.append(p);
+      imagesZone.append(canvas);
+
+      // tripeditor sp ヘッダー作成
+      if (type_value === "tripeditor") {
+        let canvas2 = document.createElement("canvas");
+        var ctx2 = canvas2.getContext("2d");
+        canvas2.id = "header_sp.jpg";
+
+        canvas2.width = 480;
+        canvas2.height = 463;
+
+        ctx2.drawImage(img, 0, 0, width, height);
+        headerImageProcess(type_value, canvas2);
+        let p2 = document.createElement("p");
+        p2.innerHTML = "<br>header_sp.jpg";
+        imagesZone.append(p2);
+        imagesZone.append(canvas2);
+      }
+    };
+    img.src = e.target.result;
+  };
+}
 
 // 画像ダウンロードFUNCTION
 const downloadImages = function () {
@@ -444,3 +550,10 @@ const downloadImages = function () {
     });
   });
 };
+
+// 画像削除
+const clearAllCanvas = function () {
+    document.getElementById("images_zone").innerHTML = "";
+    document.getElementById("header-images").innerHTML = "";
+    document.getElementById("content-images").innerHTML = "";
+}
