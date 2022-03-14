@@ -29,7 +29,7 @@
         <span id="electron-version"></span>.
       </div>
 
-      <h3>ヘッダー画像作成</h3>
+      <h3>ヘッダー画像作成 / ローカルファイルから画像作成</h3>
       <div id="types">
         <input
           type="radio"
@@ -81,7 +81,7 @@
       id="header-url-list"
       cols="100"
       rows="3"
-      placeholder="方法１：ヘッダー画像の記事URLを入力してください"
+      placeholder="方法１：記事URLから画像作成する場合、ヘッダー画像の記事URLを入力してください"
       ></textarea>
       <button id="header-button" onclick="headerImage()">
         ヘッダー画像を作成する
@@ -97,8 +97,9 @@
         ondrop="dropHandler(event);"
         ondragover="dragOverHandler(event);"
       >
-        <p style="color: #777; font-size: 12px">
-          方法２：画像ファイルをここにドロップしてください
+        <p style="color: #777; font-size: 12px; text-align: center;">
+          <br>方法２：ローカルファイルから画像作成する場合、画像ファイルをここにドロップしてください<br><br>
+          ※先に画像タイプを選択した上で画像ファイルドロップしてください
         </p>
       </div>
       <div id="header-images"></div>
@@ -254,10 +255,10 @@
           padding-bottom: 10px;
         "
       >
+      <button onclick="clearAllCanvas()" style="background-color: pink;">作成された画像を全て削除する</button>
         <button onclick="downloadImages()">
           作成された画像を全てダウンロードする
         </button>
-        <button onclick="clearAllCanvas()" style="background-color: pink;">作成された画像を削除する</button>
       </div>
 
       <h4>画像プレビュー</h4>
@@ -268,6 +269,9 @@
     <script src="./js/jszip.js"></script>
 
     <style>
+      body {
+        font-family: "游ゴシック体", YuGothic, "游ゴシック Medium", "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
+      }
       h3 {
         background-color: #eaf5ff;
         padding: 10px;
@@ -286,7 +290,7 @@
         font-weight: 700;
       }
       #drop_zone {
-        border: 5px solid blue;
+        border: 3px dotted #ccc;
         height: 100px;
         width: 100%;
         margin-bottom: 20px;
